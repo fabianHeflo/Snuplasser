@@ -114,26 +114,53 @@ async def main():
         for idx in range(len(gdf))
     }
 
+    # === Opprett train.txt-filbane utenfor løkken
+    split_file = Path("data/splits/train.txt")
+    split_file.parent.mkdir(parents=True, exist_ok=True)
+
     for idx, bbox in bbox_dict.items():
-        # Filnavn
+        # === Filnavn
         bbox_str = "_".join(f"{int(c)}" for c in bbox)
         img_name = f"image_{bbox_str}.png"
         mask_name = f"mask_{bbox_str}.png"
+        file_id = img_name.replace(".png", "")  # f.eks. image_269024_6783025_...
 
-        # Mapper
+        # === Mapper
         image_path = Path("data/images") / img_name
         mask_path = Path("data/masks") / mask_name
         image_path.parent.mkdir(parents=True, exist_ok=True)
         mask_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Hopp over hvis begge finnes
+        # === Hopp over hvis begge finnes
         if image_path.exists() and mask_path.exists():
             print(f"⏭️  Hopper over {img_name} (allerede lastet og masket)")
+
+            # Men legg likevel til i train.txt hvis det mangler
+            if split_file.exists():
+                with open(split_file, "r") as f:
+                    existing = set(line.strip() for line in f)
+            else:
+                existing = set()
+
+            if file_id not in existing:
+                with open(split_file, "a") as f:
+                    f.write(file_id + "\n")
+                print(f"📄 Lagt til {file_id} i train.txt (selv om fil fantes)")
+            else:
+                print(f"📝 {file_id} finnes allerede i train.txt")
             continue
 
-        # Last ned bilde og lag maske
+        # === Last ned bilde og lag maske
         await download_image(bbox, image_path)
         generate_mask(GEOJSON_PATH, bbox, mask_path)
+
+        # === Oppdater train.txt
+        with open(split_file, "a") as f:
+            f.write(file_id + "\n")
+        print(f"📄 Lagt til {file_id} i train.txt")
+
+    print(f"\n✅ Ferdig. train.txt ligger her: {split_file.resolve()}")
+
 
 
 
