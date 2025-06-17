@@ -20,8 +20,9 @@ class SnuplassDataset(Dataset):
 
     def __getitem__(self, idx):
         file_id = self.files[idx]
+        mask_file_id = file_
         image_path = os.path.join(self.image_dir, f"{file_id}.png")
-        mask_path = os.path.join(self.mask_dir, f"{file_id}.png")
+        mask_path = os.path.join(self.mask_dir, f"{file_id}.png")  
 
         image = np.array(Image.open(image_path).convert("RGB"))
         mask = np.array(Image.open(mask_path)) // 255  # binær 0/1
